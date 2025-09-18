@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Service
@@ -22,37 +23,33 @@ public class AuthorService {
     private AuthorRepository authorRepository;
 
     @Transactional(readOnly = true)
-    public Page<AuthorDTO> findAllPaged(Pageable pageable){
+    public Page<AuthorDTO> findAllPaged(Pageable pageable) {
         Page<Author> list = authorRepository.findAll(pageable);
         return list.map(AuthorDTO::new);
     }
 
     @Transactional(readOnly = true)
-    public AuthorDTO findById(UUID id){
-        Author author = authorRepository.findById(id).
-                orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + id));
-        return  new AuthorDTO(author);
+    public AuthorDTO findById(UUID id) {
+        Author author = authorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + id));
+        return new AuthorDTO(author);
     }
 
     @Transactional
     public AuthorDTO insert(AuthorDTO dto) {
+        validateAuthorDTO(dto, false, null);
 
-        if(authorRepository.existsByNameAndDateAndNationality(dto.getName(), dto.getDate(), dto.getNationality())){
-            throw new ResourceAlreadyExistsException("Author already exists with the same name, date of birth and nationality");
-        }
         Author entity = toEntity(dto);
         entity = authorRepository.save(entity);
         return new AuthorDTO(entity);
     }
 
     @Transactional
-    public AuthorDTO update (UUID id, AuthorDTO dto){
+    public AuthorDTO update(UUID id, AuthorDTO dto) {
         Author author = authorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + id));
 
-        if (authorRepository.existsByNameAndDateAndNationalityAndIdNot(dto.getName(), dto.getDate(), dto.getNationality(), id)) {
-            throw new ResourceAlreadyExistsException("Another author with the same name, date of birth and nationality already exists");
-        }
+        validateAuthorDTO(dto, true, id);
 
         updateEntity(author, dto);
         author = authorRepository.save(author);
@@ -60,21 +57,55 @@ public class AuthorService {
     }
 
     @Transactional
-    public void delete(UUID id){
+    public void delete(UUID id) {
         try {
             Author author = authorRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Author with id " + id + " not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + id));
 
             if (!author.getBooks().isEmpty()) {
                 throw new DatabaseException("Cannot delete author with existing books");
             }
-            authorRepository.delete(author);
 
+            authorRepository.delete(author);
         }
         catch (DataIntegrityViolationException e) {
-            throw new DatabaseException("Integrity violation: " + e.getMessage());
+            throw new DatabaseException("Integrity violation: " + e.getMostSpecificCause().getMessage());
+        }
+    }
+
+    // -------------------- Private Methods --------------------
+
+    private void validateAuthorDTO(AuthorDTO dto, boolean isUpdate, UUID currentId) {
+        if (dto.getName() == null || dto.getName().isBlank()) {
+            throw new DatabaseException("Author name is required");
         }
 
+        if (dto.getDate() == null) {
+            throw new DatabaseException("Author birth date is required");
+        }
+
+        if (dto.getDate().isAfter(LocalDate.now())) {
+            throw new DatabaseException("Birth date cannot be in the future");
+        }
+
+        if (dto.getNationality() == null || dto.getNationality().isBlank()) {
+            throw new DatabaseException("Author nationality is required");
+        }
+
+
+        if (!isUpdate) {
+            if (authorRepository.existsByNameAndDateAndNationality(dto.getName(), dto.getDate(), dto.getNationality())) {
+                throw new ResourceAlreadyExistsException(
+                        "Author already exists with the same name, date of birth and nationality"
+                );
+            }
+        } else {
+            if (authorRepository.existsByNameAndDateAndNationalityAndIdNot(dto.getName(), dto.getDate(), dto.getNationality(), currentId)) {
+                throw new ResourceAlreadyExistsException(
+                        "Another author already exists with the same name, date of birth and nationality"
+                );
+            }
+        }
     }
 
     private Author toEntity(AuthorDTO dto) {

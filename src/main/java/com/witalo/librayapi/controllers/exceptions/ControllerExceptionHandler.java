@@ -2,6 +2,7 @@ package com.witalo.librayapi.controllers.exceptions;
 
 
 import com.witalo.librayapi.services.exceptions.DatabaseException;
+import com.witalo.librayapi.services.exceptions.InvalidBookGenreException;
 import com.witalo.librayapi.services.exceptions.ResourceAlreadyExistsException;
 import com.witalo.librayapi.services.exceptions.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,6 +38,20 @@ public class ControllerExceptionHandler {
         return ResponseEntity.status(status).body(err);
     }
 
+    @ExceptionHandler(InvalidBookGenreException.class)
+    public ResponseEntity<StandardError> invalidBookGenre(InvalidBookGenreException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+        StandardError err = new StandardError(
+                Instant.now(),
+                status.value(),
+                e.getMessage(),
+                "Invalid book genre",
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(err);
+    }
+
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ValidationError> validation(MethodArgumentNotValidException e, HttpServletRequest request) {
         HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY; // 422
@@ -54,4 +69,6 @@ public class ControllerExceptionHandler {
 
         return ResponseEntity.status(status).body(err);
     }
+
+
 }

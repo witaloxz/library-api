@@ -3,11 +3,15 @@ package com.witalo.librayapi.model;
 import com.witalo.librayapi.model.enums.BookGenres;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -16,6 +20,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Book implements Serializable {
     @Serial
@@ -37,4 +42,13 @@ public class Book implements Serializable {
     @ManyToOne
     @JoinColumn(name = "id_author")
     private Author author;
+
+    @CreatedDate
+    @Column(name = "register_date")
+    private LocalDateTime registerDate;
+
+    @LastModifiedDate
+    @Column(name = "update_date")
+    private LocalDateTime updateDate;
+
 }

@@ -22,11 +22,11 @@ public class AuthorDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private UUID id;
-    @NotBlank(message = "required field")
+    @NotBlank(message = "Author name is required")
     private String name;
-    @NotNull(message = "required field")
+    @NotNull(message = "Birth date is required")
     private LocalDate date;
-    @NotBlank(message = "required field")
+    @NotBlank(message = "Nationality is required")
     private String nationality;
 
     public AuthorDTO(Author author){

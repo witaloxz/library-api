@@ -6,5 +6,6 @@ public enum BookGenres {
     MYSTERY,
     ROMANCE,
     BIOGRAPHY,
-    SCIENCE
+    SCIENCE,
+    OTHERS
 }

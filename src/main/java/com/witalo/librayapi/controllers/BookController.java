@@ -2,6 +2,7 @@ package com.witalo.librayapi.controllers;
 
 import com.witalo.librayapi.dto.BookDTO;
 import com.witalo.librayapi.services.BookService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +33,7 @@ public class BookController {
     }
 
     @PostMapping
-    public ResponseEntity<BookDTO> insert(@RequestBody BookDTO dto) {
+    public ResponseEntity<BookDTO> insert(@Valid @RequestBody BookDTO dto) {
         dto = bookService.insert(dto);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(dto.getId()).toUri();
@@ -40,7 +41,7 @@ public class BookController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<BookDTO> update (@PathVariable UUID id, @RequestBody BookDTO dto) {
+    public ResponseEntity<BookDTO> update (@PathVariable UUID id,@Valid @RequestBody BookDTO dto) {
         dto = bookService.update(id,dto);
         return ResponseEntity.ok().body(dto);
     }
